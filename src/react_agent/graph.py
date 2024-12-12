@@ -35,6 +35,7 @@ async def call_model(
     """
     configuration = Configuration.from_runnable_config(config)
 
+    # added this to find a record from tool node add_graphql_api
     last_message = state.messages[-1]
     if last_message.type == 'tool' and last_message.name == 'add_graphql_api':
         print(f"Tool message detected: {last_message.content}")
