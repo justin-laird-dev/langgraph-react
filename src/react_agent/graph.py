@@ -39,6 +39,8 @@ async def call_model(
     last_message = state.messages[-1]
     if last_message.type == 'tool' and last_message.name == 'add_graphql_api':
         print(f"Tool message detected: {last_message.content}")
+        state.ingested_apis.append(last_message.content)
+
 
     # Initialize the model with tool binding. Change the model or add more tools here.
     model = load_chat_model(configuration.model).bind_tools(TOOLS)
