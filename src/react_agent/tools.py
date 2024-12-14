@@ -1,52 +1,59 @@
-"""This module provides example tools for web scraping and search functionality.
-
-It includes a basic Tavily search function (as an example)
-
-These tools are intended as free examples to get started. For production use,
-consider implementing more robust and specialized tools tailored to your needs.
-"""
-
-from typing import Any, Callable, List, Optional, cast
-
-from langchain_community.tools.tavily_search import TavilySearchResults
-from langchain_core.runnables import RunnableConfig
-from langchain_core.tools import InjectedToolArg
+# tools.py
+from typing import Any, Dict, List
+from langchain_core.tools import tool, InjectedToolArg
 from typing_extensions import Annotated
 
-from react_agent.configuration import Configuration
-
-
-# async def search(
-#     query: str, *, config: Annotated[RunnableConfig, InjectedToolArg]
-# ) -> Optional[list[dict[str, Any]]]:
-#     """Search for general web results.
-
-#     This function performs a search using the Tavily search engine, which is designed
-#     to provide comprehensive, accurate, and trusted results. It's particularly useful
-#     for answering questions about current events.
-#     """
-#     configuration = Configuration.from_runnable_config(config)
-#     wrapped = TavilySearchResults(max_results=configuration.max_search_results)
-#     result = await wrapped.ainvoke({"query": query})
-#     return cast(list[dict[str, Any]], result)
-
-async def add_graphql_api(
-    url: str, *, state: Annotated[RunnableConfig, InjectedToolArg]
-) -> Optional[dict[str, Any]]:
+# Define the tool for adding GraphQL APIs
+@tool
+def add_graphql_api(
+    url: str,
+    *,
+    state: Annotated[Dict[str, Any], InjectedToolArg]
+) -> Dict[str, Any]:
     """Add a GraphQL API to our collection.
 
-    This function will store and analyze a GraphQL API.
-    """
-    print('state', state)
-    print('Added API', url)
+    This function stores and analyzes a GraphQL API.
+    Args:
+        url (str): The GraphQL API URL to be added.
+        state (dict): The current state, injected at runtime.
 
-    # Construct the data structure to return
+    Returns:
+        dict: Information about the added API.
+    """
+    # Initialize or retrieve the ingested_apis list from the state
+    ingested_apis = state.setdefault("ingested_apis", [])
+
+    # Construct the API info object
     api_info = {
         "url": url,
-        "description": "Description of the API",  # You can customize this as needed
-        "schema": "Schema information here"  # You can customize this as needed
+        "description": "Description of the API",  # Customize as needed
+        "schema": "Schema information here"       # Customize as needed
     }
+
+    # Add the API info to the state
+    ingested_apis.append(api_info)
+    print(f"Added API: {url}")
 
     return api_info
 
-TOOLS: List[Callable[..., Any]] = [add_graphql_api]
+# Define the tool for listing GraphQL APIs
+@tool
+def list_graphql_apis(
+    *,
+    state: Annotated[Dict[str, Any], InjectedToolArg]
+) -> List[Dict[str, Any]]:
+    """List all ingested GraphQL APIs from the state.
+
+    Args:
+        state (dict): The current state, injected at runtime.
+
+    Returns:
+        List[dict]: A list of dictionaries containing the ingested APIs.
+    """
+    # Retrieve the ingested_apis list from the state
+    ingested_apis = state.get("ingested_apis", [])
+    print(f"Listing {len(ingested_apis)} APIs: {ingested_apis}")
+    return ingested_apis
+
+# Tools list to register both functions
+TOOLS = [add_graphql_api, list_graphql_apis]

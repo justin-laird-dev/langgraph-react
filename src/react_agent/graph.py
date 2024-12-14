@@ -1,8 +1,4 @@
-"""Define a custom Reasoning and Action agent.
-
-Works with a chat model with tool calling support.
-"""
-
+# graph.py
 from datetime import datetime, timezone
 from typing import Dict, List, Literal, cast
 
@@ -15,9 +11,6 @@ from react_agent.configuration import Configuration
 from react_agent.state import InputState, State
 from react_agent.tools import TOOLS
 from react_agent.utils import load_chat_model
-
-# Define the function that calls the model
-
 
 async def call_model(
     state: State, config: RunnableConfig
@@ -34,13 +27,6 @@ async def call_model(
         dict: A dictionary containing the model's response message.
     """
     configuration = Configuration.from_runnable_config(config)
-
-    # added this to find a record from tool node add_graphql_api
-    last_message = state.messages[-1]
-    if last_message.type == 'tool' and last_message.name == 'add_graphql_api':
-        print(f"Tool message detected: {last_message.content}")
-        state.ingested_apis.append(last_message.content)
-
 
     # Initialize the model with tool binding. Change the model or add more tools here.
     model = load_chat_model(configuration.model).bind_tools(TOOLS)
@@ -72,9 +58,7 @@ async def call_model(
     # Return the model's response as a list to be added to existing messages
     return {"messages": [response]}
 
-
 # Define a new graph
-
 builder = StateGraph(State, input=InputState, config_schema=Configuration)
 
 # Define the two nodes we will cycle between
@@ -82,9 +66,7 @@ builder.add_node(call_model)
 builder.add_node("tools", ToolNode(TOOLS))
 
 # Set the entrypoint as `call_model`
-# This means that this node is the first one called
 builder.add_edge("__start__", "call_model")
-
 
 def route_model_output(state: State) -> Literal["__end__", "tools"]:
     """Determine the next node based on the model's output.
@@ -108,7 +90,6 @@ def route_model_output(state: State) -> Literal["__end__", "tools"]:
     # Otherwise we execute the requested actions
     return "tools"
 
-
 # Add a conditional edge to determine the next step after `call_model`
 builder.add_conditional_edges(
     "call_model",
@@ -124,7 +105,7 @@ builder.add_edge("tools", "call_model")
 # Compile the builder into an executable graph
 # You can customize this by adding interrupt points for state updates
 graph = builder.compile(
-    interrupt_before=[],  # Add node names here to update state before they're called
-    interrupt_after=[],  # Add node names here to update state after they're called
+    interrupt_before=["tools"],  # Inspect state before tool invocation
+    interrupt_after=["tools"],   # Inspect state after tool invocation
 )
-graph.name = "ReAct Agent"  # This customizes the name in LangSmith
+graph.name = "ReAct Agent"

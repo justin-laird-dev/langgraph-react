@@ -1,6 +1,12 @@
 import asyncio
 from react_agent.graph import graph
 from langchain_core.messages import HumanMessage
+# https://rickandmortyapi.com/graphql
+# https://countries.trevorblades.com/
+# https://graphql-pokemon2.vercel.app/
+# https://api.spacex.land/graphql/
+# htthips://swapi-graphql.netlify.app/.netlify/functions/index
+
 
 async def run_graph_agent():
     print("Welcome to the Graph Agent! Type 'exit' to quit.")
